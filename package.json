@@ -1,0 +1,31 @@
+{
+  "name": "backend",
+  "version": "0.0.1",
+  "description": "FullStackOpen Node Backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node FullStackBackend/index.js",
+    "dev": "nodemon FullStackBackend/index.js",
+    "test": "echo \"Error: No Tests\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jkorsi/FullStackBackend.git"
+  },
+  "keywords": [
+    "backend"
+  ],
+  "author": "Juho Suni",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jkorsi/FullStackBackend/issues"
+  },
+  "homepage": "https://github.com/jkorsi/FullStackBackend#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.3"
+  }
+}
