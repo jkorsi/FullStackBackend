@@ -7,7 +7,6 @@ app.use(cors())
 app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-
 //--------------------------------
 //------------ MORGAN ------------
 //--------------------------------
@@ -191,7 +190,8 @@ function getRandomInt(min, max)
 }
 
 //-------------- PORT --------------
-const PORT = 3001
+const PORT = process.env.PORT || 3001
+console.log(process.env.PORT)
 app.listen(PORT, () =>
 {
     console.log(`Server running on port ${PORT}`)
