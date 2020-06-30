@@ -7,7 +7,7 @@
     "start": "node FullStackBackend/index.js",
     "dev": "nodemon FullStackBackend/index.js",
     "test": "echo \"Error: No Tests\" && exit 1",
-    "build:ui": "rimraf -f build && cd ../FullStackOpen/Osa 2/puhelinluettelo && npm run build --prod && cpr build ../../../FullStackOpen_Backend/ -o",
+    "build:ui": "rimraf -f build && cd ../FullStackOpen/Osa 2/puhelinluettelo && npm run build --prod && cpr build ../../../FullStackOpen_Backend/build/ -o",
     "deploy": "git push heroku-numbers master",
     "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push heroku master && npm run deploy",
     "logs:prod": "heroku logs --tail"
