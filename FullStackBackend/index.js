@@ -1,14 +1,16 @@
+require('dotenv').config()
+
 const express = require('express')
 const morgan = require('morgan')
 const app = express()
 const cors = require('cors')
-app.use(cors())
+const Person = require('../models/person')
+const person = require('../models/person')
 
+app.use(cors())
 app.use(express.json())
 app.use(express.static('build'))
-
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
-
 
 //--------------------------------
 //------------ MORGAN ------------
@@ -66,8 +68,11 @@ app.get('/', (request, response) =>
 app.get('/api/persons', (request, response) =>
 {
     console.log("request headers", request.headers)
-    response.json(persons)
-    console.log("Persons get: ", persons)
+    Person.find({}).then(result =>
+    {
+        response.json(result)
+        console.log("Persons get: ", result)
+    })
 })
 
 //-------------------------------
@@ -78,22 +83,25 @@ app.get('/api/persons/:id', (request, response) =>
     console.log("request headers", request.headers)
     const id = Number(request.params.id)
     console.log(id)
-    const person = persons.find(person =>
-    {
-        console.log(person.id, typeof person.id, id, typeof id, person.id === id)
-        return person.id === id
-    })
-
-    console.log(person)
-
-    if (person)
+    Person.findById(request.params.id).then(person =>
     {
         response.json(person)
-        console.log("person", person)
-    } else
-    {
-        response.status(404).end()
-    }
+    })
+
+    // const person = persons.find(person =>
+    // {
+    //     console.log("Person's id check:", person.id, typeof person.id, id, typeof id, person.id === id)
+    //     return person.id === id
+    // })
+
+    // if (person)
+    // {
+    //     response.json(person)
+    //     console.log("person", person)
+    // } else
+    // {
+    //     response.status(404).end()
+    // }
 })
 
 //-------------------------------
@@ -104,7 +112,6 @@ app.get('/info', (request, response) =>
 
     const length = persons.length
     const lengthString = `There's ${length} persons in the phonebook.`
-
     const date = new Date().toString()
     const content = `${lengthString}<br><br>${date}`
 
@@ -134,6 +141,7 @@ app.post('/api/persons', (request, response) =>
     const body = request.body
     console.log("Req body:", body)
 
+    //---------- ERRORS ------------
     if (!body.name && !body.number)
     {
         return response.status(400).json({
@@ -153,11 +161,12 @@ app.post('/api/persons', (request, response) =>
         })
     }
 
+    //---------- LOGIC ------------
     const personExists = persons.find(person =>
     {
         console.log("Debug Person name: ", person.name, ", Body name: ", body.name)
         return person.name === body.name
-        console.log(person.name === body.name)
+        console.log("Person name, ", person.name, ", body name", body.name)
     })
 
     if (personExists)
@@ -167,18 +176,17 @@ app.post('/api/persons', (request, response) =>
         })
     } else
     {
-        const person = {
+        const person = new Person({
             name: body.name,
             number: body.number,
-            // Int between 10 billion and 99,99.. billion (to keep consistent length)
-            id: getRandomInt(10000000000, 100000000000)
-        }
-        console.log("Debug Person: ", person)
+        })
 
+        person.save().then(savedPerson =>
+        {
+            response.json(savedPerson)
+            console.log("Saved person successfully:", savedPerson)
+        })
         persons = persons.concat(person)
-        console.log(persons)
-
-        response.json(person)
     }
 })
 
@@ -193,7 +201,7 @@ function getRandomInt(min, max)
 }
 
 //-------------- PORT --------------
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 console.log(process.env.PORT)
 app.listen(PORT, () =>
 {
