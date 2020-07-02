@@ -15,7 +15,6 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
 //--------------------------------
 //------------ MORGAN ------------
 //--------------------------------
-
 morgan.token('body', function (req, res)
 {
     return JSON.stringify(req.body, replacer)
@@ -23,35 +22,34 @@ morgan.token('body', function (req, res)
 
 function replacer(key, value)
 {
-    console.log("Before if value, ", value)
     return value;
 }
 
 //--------------------------------
 //------- HARDCODE PERSONS -------
 //--------------------------------
-
-let persons = [{
-    name: "Mano Wethered",
-    number: "753 487 7192",
-    id: 1
-}, {
-    name: "Asher Seggie",
-    number: "284 286 1785",
-    id: 2
-}, {
-    name: "Julio de Merida",
-    number: "197 855 1505",
-    id: 3
-}, {
-    name: "Nichols Rew",
-    number: "259 862 9461",
-    id: 4
-}, {
-    name: "Bondie Ogden",
-    number: "150 417 5651",
-    id: 5
-}]
+let persons = []
+// let persons = [{
+//     name: "Mano Wethered",
+//     number: "753 487 7192",
+//     id: 1
+// }, {
+//     name: "Asher Seggie",
+//     number: "284 286 1785",
+//     id: 2
+// }, {
+//     name: "Julio de Merida",
+//     number: "197 855 1505",
+//     id: 3
+// }, {
+//     name: "Nichols Rew",
+//     number: "259 862 9461",
+//     id: 4
+// }, {
+//     name: "Bondie Ogden",
+//     number: "150 417 5651",
+//     id: 5
+// }]
 
 //--------------------------------
 //----------- GET ROOT -----------
@@ -78,30 +76,24 @@ app.get('/api/persons', (request, response) =>
 //-------------------------------
 //---------- GET BY ID ----------
 //-------------------------------
-app.get('/api/persons/:id', (request, response) =>
+app.get('/api/persons/:id', (request, response, next) =>
 {
     console.log("request headers", request.headers)
-    const id = Number(request.params.id)
-    console.log(id)
-    Person.findById(request.params.id).then(person =>
-    {
-        response.json(person)
-    })
-
-    // const person = persons.find(person =>
-    // {
-    //     console.log("Person's id check:", person.id, typeof person.id, id, typeof id, person.id === id)
-    //     return person.id === id
-    // })
-
-    // if (person)
-    // {
-    //     response.json(person)
-    //     console.log("person", person)
-    // } else
-    // {
-    //     response.status(404).end()
-    // }
+    const id = String(request.params.id)
+    console.log('ID', id)
+    Person.findById(id)
+        .then(person =>
+        {
+            if (person)
+            {
+                response.json(person)
+            }
+            else
+            {
+                response.status(404).end()
+            }
+        })
+        .catch(error => next(error))
 })
 
 //-------------------------------
@@ -109,7 +101,6 @@ app.get('/api/persons/:id', (request, response) =>
 //-------------------------------
 app.get('/info', (request, response) =>
 {
-
     const length = persons.length
     const lengthString = `There's ${length} persons in the phonebook.`
     const date = new Date().toString()
@@ -123,13 +114,21 @@ app.get('/info', (request, response) =>
 //----------------------------------
 //----------- DELETE ONE -----------
 //----------------------------------
-app.delete('/api/persons/:id', (request, response) =>
+app.delete('/api/persons/:id', (request, response, next) =>
 {
-    console.log("request headers", request.headers)
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
 
-    response.status(204).end()
+    console.log("request headers", request.headers)
+    const id = String(request.params.id)
+    console.log('Persons id', id)
+
+    Person.findByIdAndRemove(id)
+        .then(person =>
+        {
+            console.log('Person with id', id, ' removed succesfully.')
+            persons = persons.filter(person => person.id !== id)
+            response.status(204).end()
+        })
+        .catch(error => next(error))
 })
 
 //--------------------------------
@@ -166,7 +165,7 @@ app.post('/api/persons', (request, response) =>
     {
         console.log("Debug Person name: ", person.name, ", Body name: ", body.name)
         return person.name === body.name
-        console.log("Person name, ", person.name, ", body name", body.name)
+
     })
 
     if (personExists)
@@ -185,20 +184,11 @@ app.post('/api/persons', (request, response) =>
         {
             response.json(savedPerson)
             console.log("Saved person successfully:", savedPerson)
+            persons = persons.concat(savedPerson)
         })
-        persons = persons.concat(person)
+
     }
 })
-
-//--------- RANDOM INT ----------
-// Source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
-function getRandomInt(min, max)
-{
-    console.log("Debug: Get Random ID. Min: ", min, ", Max: ", max)
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
-}
 
 //-------------- PORT --------------
 const PORT = process.env.PORT
@@ -208,3 +198,24 @@ app.listen(PORT, () =>
     console.log(`Server running on port ${PORT}`)
 })
 
+//-------- ERROR HANDLING ----------
+const unknownEndpoint = (request, response) =>
+{
+    response.status(404).send({error: 'Path not found'})
+}
+
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) =>
+{
+    console.error('Error message:', error.message)
+    console.error('Error name: ', error.name)
+
+    if (error.name === 'CastError')
+    {
+        return response.status(400).send({error: 'ID is in incorrect format'})
+    }
+
+    next(error)
+}
+app.use(errorHandler)
