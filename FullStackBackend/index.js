@@ -45,6 +45,7 @@ app.get('/api/persons', (request, response) =>
     Person.find({}).then(result =>
     {
         response.json(result)
+        console.log('Length:', result.length)
         console.log("Persons get: ", result)
     })
 })
@@ -75,16 +76,24 @@ app.get('/api/persons/:id', (request, response, next) =>
 //-------------------------------
 //---------- GET INFO -----------
 //-------------------------------
-app.get('/info', (request, response) =>
+app.get('/info', (request, response, next) =>
 {
-    const length = persons.length
-    const lengthString = `There's ${length} persons in the phonebook.`
-    const date = new Date().toString()
-    const content = `${lengthString}<br><br>${date}`
+    let length = 0
+    Person.find({}).then(result =>
+    {
+        length = result.length
+        console.log('Length:', result.length)
 
-    console.log("request headers", request.headers)
-    response.send(content)
-    console.log("Persons get: ", persons)
+        const lengthString = `There's ${length} persons in the phonebook.`
+        const date = new Date().toString()
+        const content = `${lengthString}<br><br>${date}`
+
+        console.log("request headers", request.headers)
+        response.send(content)
+        console.log("Persons get: ", persons)
+
+    }).catch(error => next(error))
+
 })
 
 //----------------------------------
@@ -92,20 +101,30 @@ app.get('/info', (request, response) =>
 //----------------------------------
 app.put('/api/persons/:id', (request, response) =>
 {
+    const body = request.body
     console.log("request headers", request.headers)
     console.log("Update request parameters:", request.params)
     const id = String(request.params.id)
-    console.log('Updating person with ID: ', id)
-    Person.findByIdAndUpdate(id)
-        .then(person =>
+    console.log('Trying to update person with ID: ', id)
+    console.log('Person not found')
+
+    console.log('Person found')
+    const person = {
+        name: body.name,
+        number: body.number,
+        id: body.id
+    }
+
+    console.log('persons status: ', persons)
+
+    Person.findByIdAndUpdate(id, person, {new: true})
+        .then(updatedPerson =>
         {
-            //persons = persons.filter(person => person.id !== id)
-            response.status(204).end()
+            response.json(updatedPerson)
             console.log('Person with id', id, ' updated succesfully.')
         })
         .catch(error => next(error))
-}
-)
+})
 
 //----------------------------------
 //----------- DELETE ONE -----------
@@ -161,7 +180,6 @@ app.post('/api/persons', (request, response) =>
     {
         console.log("Debug Person name: ", person.name, ", Body name: ", body.name)
         return person.name === body.name
-
     })
 
     if (personExists)
@@ -182,7 +200,6 @@ app.post('/api/persons', (request, response) =>
             console.log("Saved person successfully:", savedPerson)
             persons = persons.concat(savedPerson)
         })
-
     }
 })
 
