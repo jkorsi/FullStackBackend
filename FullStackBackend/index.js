@@ -25,31 +25,7 @@ function replacer(key, value)
     return value;
 }
 
-//--------------------------------
-//------- HARDCODE PERSONS -------
-//--------------------------------
 let persons = []
-// let persons = [{
-//     name: "Mano Wethered",
-//     number: "753 487 7192",
-//     id: 1
-// }, {
-//     name: "Asher Seggie",
-//     number: "284 286 1785",
-//     id: 2
-// }, {
-//     name: "Julio de Merida",
-//     number: "197 855 1505",
-//     id: 3
-// }, {
-//     name: "Nichols Rew",
-//     number: "259 862 9461",
-//     id: 4
-// }, {
-//     name: "Bondie Ogden",
-//     number: "150 417 5651",
-//     id: 5
-// }]
 
 //--------------------------------
 //----------- GET ROOT -----------
@@ -110,6 +86,26 @@ app.get('/info', (request, response) =>
     response.send(content)
     console.log("Persons get: ", persons)
 })
+
+//----------------------------------
+//----------- UPDATE ONE -----------
+//----------------------------------
+app.put('/api/persons/:id', (request, response) =>
+{
+    console.log("request headers", request.headers)
+    console.log("Update request parameters:", request.params)
+    const id = String(request.params.id)
+    console.log('Updating person with ID: ', id)
+    Person.findByIdAndUpdate(id)
+        .then(person =>
+        {
+            //persons = persons.filter(person => person.id !== id)
+            response.status(204).end()
+            console.log('Person with id', id, ' updated succesfully.')
+        })
+        .catch(error => next(error))
+}
+)
 
 //----------------------------------
 //----------- DELETE ONE -----------
