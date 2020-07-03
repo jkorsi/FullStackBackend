@@ -5,7 +5,6 @@ const morgan = require('morgan')
 const app = express()
 const cors = require('cors')
 const Person = require('../models/person')
-const person = require('../models/person')
 
 app.use(cors())
 app.use(express.json())
@@ -149,7 +148,7 @@ app.delete('/api/persons/:id', (request, response, next) =>
 //--------------------------------
 //----------- POST ONE -----------
 //--------------------------------
-app.post('/api/persons', (request, response) =>
+app.post('/api/persons', (request, response, next) =>
 {
     console.log("Req Params: ", request.params)
     const body = request.body
@@ -194,12 +193,13 @@ app.post('/api/persons', (request, response) =>
             number: body.number,
         })
 
-        person.save().then(savedPerson =>
-        {
-            response.json(savedPerson)
-            console.log("Saved person successfully:", savedPerson)
-            persons = persons.concat(savedPerson)
-        })
+        person.save()
+            .then(savedPerson =>
+            {
+                response.json(savedPerson)
+                console.log("Saved person successfully:", savedPerson)
+                persons = persons.concat(savedPerson)
+            }).catch(error => next(error))
     }
 })
 
@@ -224,9 +224,12 @@ const errorHandler = (error, request, response, next) =>
     console.error('Error message:', error.message)
     console.error('Error name: ', error.name)
 
-    if (error.name === 'CastError')
+    switch (error.name)
     {
-        return response.status(400).send({error: 'ID is in incorrect format'})
+        case 'CastError':
+            return response.status(400).send({error: 'ID is in incorrect format'})
+        case 'ValidationError':
+            return response.status(409).send({error: error.message})
     }
 
     next(error)
