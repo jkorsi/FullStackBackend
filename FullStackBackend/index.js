@@ -14,14 +14,14 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
 //--------------------------------
 //------------ MORGAN ------------
 //--------------------------------
-morgan.token('body', function (req, res)
+morgan.token('body', function (req)
 {
     return JSON.stringify(req.body, replacer)
 })
 
 function replacer(key, value)
 {
-    return value;
+    return value
 }
 
 let persons = []
@@ -31,7 +31,7 @@ let persons = []
 //--------------------------------
 app.get('/', (request, response) =>
 {
-    console.log("request headers", request.headers)
+    console.log('request headers', request.headers)
     response.send('<h2>Root page</h2>')
 })
 
@@ -40,12 +40,12 @@ app.get('/', (request, response) =>
 //-------------------------------
 app.get('/api/persons', (request, response) =>
 {
-    console.log("request headers", request.headers)
+    console.log('request headers', request.headers)
     Person.find({}).then(result =>
     {
         response.json(result)
         console.log('Length:', result.length)
-        console.log("Persons get: ", result)
+        console.log('Persons get: ', result)
     })
 })
 
@@ -54,7 +54,7 @@ app.get('/api/persons', (request, response) =>
 //-------------------------------
 app.get('/api/persons/:id', (request, response, next) =>
 {
-    console.log("request headers", request.headers)
+    console.log('request headers', request.headers)
     const id = String(request.params.id)
     console.log('ID', id)
     Person.findById(id)
@@ -63,8 +63,7 @@ app.get('/api/persons/:id', (request, response, next) =>
             if (person)
             {
                 response.json(person)
-            }
-            else
+            } else
             {
                 response.status(404).end()
             }
@@ -87,9 +86,9 @@ app.get('/info', (request, response, next) =>
         const date = new Date().toString()
         const content = `${lengthString}<br><br>${date}`
 
-        console.log("request headers", request.headers)
+        console.log('request headers', request.headers)
         response.send(content)
-        console.log("Persons get: ", persons)
+        console.log('Persons get: ', persons)
 
     }).catch(error => next(error))
 
@@ -98,11 +97,11 @@ app.get('/info', (request, response, next) =>
 //----------------------------------
 //----------- UPDATE ONE -----------
 //----------------------------------
-app.put('/api/persons/:id', (request, response) =>
+app.put('/api/persons/:id', (request, response, next) =>
 {
     const body = request.body
-    console.log("request headers", request.headers)
-    console.log("Update request parameters:", request.params)
+    console.log('request headers', request.headers)
+    console.log('Update request parameters:', request.params)
     const id = String(request.params.id)
     console.log('Trying to update person with ID: ', id)
     console.log('Person not found')
@@ -116,7 +115,9 @@ app.put('/api/persons/:id', (request, response) =>
 
     console.log('persons status: ', persons)
 
-    Person.findByIdAndUpdate(id, person, {new: true})
+    Person.findByIdAndUpdate(id, person, {
+        new: true
+    })
         .then(updatedPerson =>
         {
             response.json(updatedPerson)
@@ -131,12 +132,12 @@ app.put('/api/persons/:id', (request, response) =>
 app.delete('/api/persons/:id', (request, response, next) =>
 {
 
-    console.log("request headers", request.headers)
+    console.log('request headers', request.headers)
     const id = String(request.params.id)
     console.log('Persons id', id)
 
     Person.findByIdAndRemove(id)
-        .then(person =>
+        .then(response =>
         {
             console.log('Person with id', id, ' removed succesfully.')
             persons = persons.filter(person => person.id !== id)
@@ -150,9 +151,9 @@ app.delete('/api/persons/:id', (request, response, next) =>
 //--------------------------------
 app.post('/api/persons', (request, response, next) =>
 {
-    console.log("Req Params: ", request.params)
+    console.log('Req Params: ', request.params)
     const body = request.body
-    console.log("Req body:", body)
+    console.log('Req body:', body)
 
     //---------- ERRORS ------------
     if (!body.name && !body.number)
@@ -160,14 +161,12 @@ app.post('/api/persons', (request, response, next) =>
         return response.status(400).json({
             error: 'Name and number are required'
         })
-    }
-    else if (!body.name)
+    } else if (!body.name)
     {
         return response.status(400).json({
             error: 'Name is required'
         })
-    }
-    else if (!body.number)
+    } else if (!body.number)
     {
         return response.status(400).json({
             error: 'Number is required'
@@ -177,7 +176,7 @@ app.post('/api/persons', (request, response, next) =>
     //---------- LOGIC ------------
     const personExists = persons.find(person =>
     {
-        console.log("Debug Person name: ", person.name, ", Body name: ", body.name)
+        console.log('Debug Person name: ', person.name, ', Body name: ', body.name)
         return person.name === body.name
     })
 
@@ -197,7 +196,7 @@ app.post('/api/persons', (request, response, next) =>
             .then(savedPerson =>
             {
                 response.json(savedPerson)
-                console.log("Saved person successfully:", savedPerson)
+                console.log('Saved person successfully:', savedPerson)
                 persons = persons.concat(savedPerson)
             }).catch(error => next(error))
     }
@@ -214,7 +213,9 @@ app.listen(PORT, () =>
 //-------- ERROR HANDLING ----------
 const unknownEndpoint = (request, response) =>
 {
-    response.status(404).send({error: 'Path not found'})
+    response.status(404).send({
+        error: 'Path not found'
+    })
 }
 
 app.use(unknownEndpoint)
@@ -226,10 +227,16 @@ const errorHandler = (error, request, response, next) =>
 
     switch (error.name)
     {
-        case 'CastError':
-            return response.status(400).send({error: 'ID is in incorrect format'})
-        case 'ValidationError':
-            return response.status(409).send({error: error.message})
+    case 'CastError':
+
+        return response.status(400).send({
+
+            error: 'ID is in incorrect format'
+        })
+    case 'ValidationError':
+        return response.status(409).send({
+            error: error.message
+        })
     }
 
     next(error)
